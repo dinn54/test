@@ -1,0 +1,84 @@
+# .github/workflows/cicd.yml
+name: CAW-CICD
+
+# Config : Event 
+on:
+  push:
+    branches: ["main"]
+
+# Env
+env:
+  GITHUB_TOKEN: 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
+  DOCKER_IMAGE: ghcr.io/imantisco/contract-admin
+  DOCKER_CONTAINER: admin-web
+  REACT_APP_SERVER_BASEURL: https://sc-admin-api.carrieverse.io/api
+
+jobs:
+  # Config Test Before Build
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v3
+
+    - name: Nodejs 20 setup
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.11.0
+        cache: 'npm'
+
+    - name: Setting .env
+      run: |
+        echo "REACT_APP_SERVER_BASEURL=${{ env.REACT_APP_SERVER_BASEURL }}" >> .env
+        cat .env
+
+    - run: npm install
+    - run: npm run test
+
+  # Config : Build & Push to GHCR Docker Image 
+  build:
+    needs: test
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker build
+      id: buildx
+      uses: docker/setup-buildx-action@v2
+   
+    - name: Login to ghcr
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ env.GITHUB_TOKEN }}
+
+    - name: Build and Push
+      id: docker_build
+      uses: docker/build-push-action@v3
+      with:
+        push: true
+        tags: ${{ env.DOCKER_IMAGE }}:latest
+
+  # Config : Deploy To Cloud Server
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+    - name: Login to ghcr
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ env.GITHUB_TOKEN }}
+    # Docker Start! (Del Current Container & Image)
+    - name: Running Docker
+      run: |
+        echo "REACT_APP_SERVER_BASEURL=${{ env.REACT_APP_SERVER_BASEURL }}" >> .env
+        cat .env
+        docker stop ${{ env.DOCKER_CONTAINER }} && docker rm ${{ env.DOCKER_CONTAINER }} && docker rmi ${{ env.DOCKER_IMAGE }}:latest
+        docker run --env-file ./.env -d -p 3000:3000 --name ${{ env.DOCKER_CONTAINER }} --restart always ${{ env.DOCKER_IMAGE }}:latest
+
+    - name: Restart Nginx
+      run: sudo service nginx restart
