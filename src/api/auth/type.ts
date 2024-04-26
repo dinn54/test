@@ -20,3 +20,7 @@ export interface RefreshResponse {
 export interface userRoleResponse {
     user_id: string;
 }
+
+export interface duplicateResponse{
+    
+}

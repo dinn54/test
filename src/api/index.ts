@@ -76,20 +76,26 @@ const responseErrHandler = async (error: any) => {
     //     // Token 갈아끼우기
     //     AC_TOKEN = newToken.payload.token;
     // }
-    
-    if (error_code === CUSTOM_ERROR.INVALID_ID.code || error_code === CUSTOM_ERROR.INVALID_PW.code){
-        const message = 'Wrong ID or Password '
-        // toast (message)
-        console.log(message);
+    let handledMsg;
+    switch(error_code){
+        case CUSTOM_ERROR.INVALID_ID.code: 
+            handledMsg = '올바르지 않은 ID입니다';
+            break;
+        case CUSTOM_ERROR.INVALID_PW.code:
+            handledMsg = '올바르지 않은 Password입니다';
+            break;
+        case CUSTOM_ERROR.INVALID_PID.code:
+            handledMsg = '올바르지 Vault Pool ID입니다';
+            break;
+        case CUSTOM_ERROR.DUP_USER_LOGINID.code:
+            handledMsg = '이미 존재하는 ID입니다';
+            break;
+        case CUSTOM_ERROR.DUP_USER_NAME.code:
+            handledMsg = '이미 존재하는 이름입니다';
+            break;
     }
-    
-  
-    if ( error_code === CUSTOM_ERROR.INVALID_TOKEN.code || CUSTOM_ERROR.INVALID_HEADER.code){
-        
-        
-    }
-
-    throw error;
+    console.log(error,"\n",handledMsg);
+    throw new Error(handledMsg);
 }
 
 _api.interceptors.response.use(responseHandler, responseErrHandler);

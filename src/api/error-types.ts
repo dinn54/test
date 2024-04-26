@@ -52,7 +52,7 @@ export const CUSTOM_ERROR = {
     },
     "DUP_USER_NAME": {
         message: "duplicate user name",
-        code : "E-108"
+        code : "E-109"
     },
     "NO_ENOUGH_PARAMETER": {
         message: "at least one parameter needed",

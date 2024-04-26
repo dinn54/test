@@ -1,5 +1,5 @@
 import api from '../index';
-import {SignInResponse, SignUpResponse, userRoleResponse, VerifyTokenResponse} from './type';
+import {duplicateResponse, SignInResponse, SignUpResponse, userRoleResponse, VerifyTokenResponse} from './type';
 
 const AUTH_ENDPOINT = "auth";
 
@@ -23,6 +23,14 @@ export const verifyTokenApi = async (token: string)=>{
     }
 
     return await api.post<VerifyTokenResponse>(`v1/${AUTH_ENDPOINT}/verify`, body);
+}
+
+export const duplicateApi = async(loginId: string, name: string)=>{
+    const body = {
+        loginId, name
+    }
+    
+    return await api.post<duplicateResponse>(`v1/${AUTH_ENDPOINT}/duplicate`, body);
 }
 
 export const signOutApi = async ()=>{

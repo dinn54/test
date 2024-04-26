@@ -4,11 +4,10 @@ import { Label } from "@/shared/shadcn/ui/label";
 import { Button } from "@/shared/shadcn/ui/button";
 import { useState } from "react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/shared/shadcn/ui/select";
-import { signUpApi } from '@/api/auth';
+import { duplicateApi, signUpApi } from '@/api/auth';
 import { useRouter } from "next/navigation";
 import { EyeOpenIcon, EyeNoneIcon } from "@radix-ui/react-icons";
-import { CUSTOM_ERROR } from "@/api/error-types";
- 
+import useToastHook from "@/shared/hooks/useToastHook";
 
 
 const SignUp = ()=> {
@@ -16,16 +15,15 @@ const SignUp = ()=> {
   const [userPW, setUserPW] = useState("");
   const [confirmPW, setConfirmPW] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [uname, setUname] = useState("");
+  const [username, setusername] = useState("");
   const [department, setDepartment] = useState("")
-  const [pwEqual, setPwEqual] = useState(false);
+  const [pwEqual, setPwEqual] = useState(true);
   const router = useRouter();
 
+  const {handleSuccess, handleFail} = useToastHook();
 
 
 const handleVeirfyPassword = () => {
-
-  // Password === verify Password ?
   if (userPW === confirmPW){
     setPwEqual(true);
   }else{
@@ -40,27 +38,53 @@ const handleEnter = (e : any) => {
 
 const handleDepartmentSelect = (selectedDepartment : any)=>{
   setDepartment(selectedDepartment);
-  console.log(selectedDepartment);
+}
+const checkBeforeSignUpCall = async()=>{
+  if (!pwEqual){
+    handleFail(`"SignUp 실패", `, `"PassWord와 Verify Password가 서로 다릅니다"`);
+    return false;
+  }else if (userID.length < 2){
+    handleFail(`"SignUp 실패", `, `"ID를 두 글자 이상 입력해 주세요"`);
+    return false;
+  }else if (userPW.length < 2){
+    handleFail(`"SignUp 실패", `, `"Password를 두 글자 이상 입력해 주세요"`);
+    return false;
+  }else if (username.length < 2){
+    handleFail(`"SignUp 실패", `, `"이름을 두 글자 이상 입력해 주세요"`);
+    return false;
+  }else if (department===""){
+    handleFail(`"SignUp 실패", `, `"부서를 선택 해 주세요"`);
+    return false;
+  }else{
+    const res = await duplicateApi(userID, username);
+    const isNotDuplicated = res.payload;
+    if(!isNotDuplicated){
+      handleFail(`"SignUp 실패", `, `"이미 가입된 ID 또는 이름입니다"`);
+      return false;
+    }
+    return true;
+  }
 }
 
 const signUpHandler = async() =>{
+  if (!(await checkBeforeSignUpCall())) return;
   try {
-    const res = await signUpApi(userID, userPW, uname, department);
+    const res = await signUpApi(userID, userPW, username, department);
     const uid = res.payload.user_id;
-    console.log(uid)
-    //uid를 받아오는 이유?
-    console.log('uid : ', uid)
-
+    handleSuccess("회원가입", "완료");
     //로그인페이지로 이동
     router.push("/auth/sign-in");
 } catch (e: any) {
+  handleFail(`"Invalid Data", `, e);
 }
 }
   return (
     
     <div className="flex flex-col justify-center items-center h-screen gap-3">
-      <Label className="form_title"> 회원 등록 신청</Label>
       <div className="grid w-full max-w-sm items-center gap-3">
+        
+      <Label className="form_title my-5 text-center"> 회원 등록 신청</Label>
+      
       <Label>ID</Label>
           <Input
             type="text"
@@ -70,20 +94,20 @@ const signUpHandler = async() =>{
             onChange={e=> setUserID(e.currentTarget.value)}
         />
 
-        <div style={{display: 'flex'}}>
-          <Label>Password</Label>
-          {passwordVisible? <EyeOpenIcon style={{marginLeft: '0.5rem'}} onClick={()=>setPasswordVisible(false)}/>
-        :<EyeNoneIcon style={{marginLeft: '0.5rem'}} onClick={()=>setPasswordVisible(true)}/>}
-          </div>
+        <div className="flex">
+        <Label className="mt-2">Password</Label>
+          {passwordVisible? <EyeOpenIcon className="ml-2 mt-2" onClick={()=>setPasswordVisible(false)}/>
+        :<EyeNoneIcon className="ml-2 mt-2" onClick={()=>setPasswordVisible(true)}/>}
+        </div>
         <Input
           type={passwordVisible? 'text':'password'}
           id="password"
           placeholder="Password"
           value={userPW}
           onChange={e=> setUserPW(e.currentTarget.value)}
-        ></Input>
+        />
 
-        <Label className="verifyPassword">Verify Password</Label>
+        <Label className="verifyPassword mt-2">Verify Password</Label>
         <Input
           type={passwordVisible? 'text':'password'}
           id="confirmPassword"
@@ -95,32 +119,33 @@ const signUpHandler = async() =>{
           } }
           onBlur={handleVeirfyPassword}
         />
-        {!pwEqual && <div style={{color: 'red'}}>불일치</div> }
+        {!pwEqual && <div className="text-red-500">불일치</div> }
 
-        <Label>User Name</Label>
+        <Label className="mt-2">User Name</Label>
         <Input
           type={'text'}
           id="userName"
           placeholder="Name"
-          value={uname}
-          onChange={e=> setUname(e.currentTarget.value)}
+          value={username}
+          onChange={e=> setusername(e.currentTarget.value)}
         />
-        <Label>Select Department</Label>
+
+        <Label className="mt-2">Select Department</Label>
         <Select onValueChange={handleDepartmentSelect}>
           <SelectTrigger className="selectTrigger">
             <SelectValue placeholder="Department(Select)"></SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="web3_dev">We3 Dev Team</SelectItem>
-              <SelectItem value="operation_management">Operation Management</SelectItem>
+              <SelectItem value="web3 dev team">We3 Dev Team</SelectItem>
+              <SelectItem value="operation management">Operation Management</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
         <div onKeyUp={handleEnter}/>
 
       <Button
-        className='w-full max-w-sm'
+        className='w-full max-w-sm my-3 border-2'
         variant="outline"
         disabled={false}
         onClick={signUpHandler}

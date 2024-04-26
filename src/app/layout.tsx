@@ -4,6 +4,8 @@ import { Header } from '@/widgets/header'
 import { Footer } from '@/widgets/footer'
 import { ThemeProvider } from './themeProvider'
 import { useTheme } from "next-themes"
+import { Toaster } from '@/shared/shadcn/ui/toaster'
+
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -27,6 +29,7 @@ export default function RootLayout({
         <Header />
           {children}
         </ThemeProvider>
+        <Toaster />
       </body>
     </html>
   )
