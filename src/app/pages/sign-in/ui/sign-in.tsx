@@ -4,8 +4,8 @@ import { Button } from '@/shared/shadcn/ui/button'
 import useWallet from '@/shared/hooks/useWallet'
 import useContract from '@/shared/hooks/useContract'
 
-export function signIn() {
+export function SignIn() {
   return <div>signIn</div>
 }
 
-export default signIn
+export default SignIn

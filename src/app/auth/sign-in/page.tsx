@@ -5,7 +5,6 @@ import { Input } from "@/shared/shadcn/ui/input";
 import { Label } from "@/shared/shadcn/ui/label";
 import { Button } from "@/shared/shadcn/ui/button";
 import { signInApi } from '@/api/auth';
-import { getAccessTokenFromLocalStorage, setAccessTokenToLocalStorage, setrefreshTokenToLocalStorage } from '@/features/auth';
 import { useRouter } from 'next/navigation';
 import useToastHook from '@/shared/hooks/useToastHook';
 import { EyeNoneIcon, EyeOpenIcon } from '@radix-ui/react-icons';
@@ -39,8 +38,6 @@ const SignIn = ()=> {
         handleSuccess("login", "success")
 
         //token 관리 로직 코드 필요
-        setAccessTokenToLocalStorage(ac_token);
-        setrefreshTokenToLocalStorage(rf_token);
         router.push("/");
     } catch (error: any) {
       handleFail(`"Invalid Data", `,`"${error.message}"`);

@@ -4,7 +4,7 @@ import Vault from './vault'
 export function ClingSwap() {
   return (
     <div>
-      <h4 className="text-2xl">Vault Pool</h4>
+      <h4 className="text-2xl">Cling Defi Pool</h4>
       <Vault />
     </div>
   )

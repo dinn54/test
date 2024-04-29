@@ -1,7 +1,6 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosError, AxiosResponse, AxiosRequestConfig } from "axios";
 import { CUSTOM_ERROR } from "./error-types";
 import { signInApi } from "./auth";
-import { getAccessTokenFromLocalStorage } from "../features/auth";
 
 export interface ServerResponse<T> {
     statusCode: number;
@@ -16,7 +15,6 @@ export interface ServerError {
 }
 
 
-let AC_TOKEN = getAccessTokenFromLocalStorage();
 
 const _api = axios.create({
     //baseURL 참조 env 적용 안됨
@@ -38,11 +36,7 @@ const jwtPrefix = `Bearer`
  */
 // Request : Handler (Header Auth token)
 const requestHandler = (config: InternalAxiosRequestConfig) => {
-    if (!AC_TOKEN) {
-        AC_TOKEN = getAccessTokenFromLocalStorage();
-    }
-    
-    config.headers.Authorization = `${jwtPrefix} ${AC_TOKEN}`;
+
     return config;
 }
 
@@ -93,9 +87,17 @@ const responseErrHandler = async (error: any) => {
         case CUSTOM_ERROR.DUP_USER_NAME.code:
             handledMsg = '이미 존재하는 이름입니다';
             break;
+        case CUSTOM_ERROR.AUTH_ERROR.code:
+            handledMsg = '인증 할 수 없습니다';
+            break;
+        case CUSTOM_ERROR.INVALID_TOKEN.code:
+            handledMsg = '유효하지 않은 토큰입니다';
+            break;
+        case CUSTOM_ERROR.INSUFFICIENT_ROLE.code:
+            handledMsg = '접근 할 수 없는 계정입니다';
+            break;
     }
-    console.log(error,"\n",handledMsg);
-    throw new Error(handledMsg);
+    return Promise.reject(handledMsg);
 }
 
 _api.interceptors.response.use(responseHandler, responseErrHandler);

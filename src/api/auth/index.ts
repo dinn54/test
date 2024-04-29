@@ -1,7 +1,11 @@
 import api from '../index';
-import {duplicateResponse, SignInResponse, SignUpResponse, userRoleResponse, VerifyTokenResponse} from './type';
+import {AuthResponse, duplicateIdResponse, duplicateNameResponse, SignInResponse, SignOutResponse, SignUpResponse, userRoleResponse} from './type';
 
 const AUTH_ENDPOINT = "auth";
+
+export const authApi = async ()=>{
+    return await api.get<AuthResponse>(`v1/${AUTH_ENDPOINT}`);
+}
 
 export const signInApi = async (id: string, pw: string)=>{
     const body={
@@ -17,24 +21,17 @@ export const signUpApi = async(login_id: string, login_pw: string, name: string,
     return await api.post<SignUpResponse>(`v1/${AUTH_ENDPOINT}/sign-up`, body);
 }
 
-export const verifyTokenApi = async (token: string)=>{
-    const body = {
-        token
-    }
-
-    return await api.post<VerifyTokenResponse>(`v1/${AUTH_ENDPOINT}/verify`, body);
+export const signOutApi = async () =>{
+    return await api.post<SignOutResponse>(`v1/${AUTH_ENDPOINT}/sign-out`);
 }
 
-export const duplicateApi = async(loginId: string, name: string)=>{
-    const body = {
-        loginId, name
-    }
+export const duplicateIdApi = async(userId: string)=>{
     
-    return await api.post<duplicateResponse>(`v1/${AUTH_ENDPOINT}/duplicate`, body);
+    return await api.get<duplicateIdResponse>(`v1/${AUTH_ENDPOINT}/duplicate/id/${userId}`);
 }
+export const duplicateNameApi = async(userName: string)=>{
 
-export const signOutApi = async ()=>{
-
+    return await api.get<duplicateNameResponse>(`v1/${AUTH_ENDPOINT}/duplicate/name/${userName}`);
 }
 
 export const refreshApi = async ()=>{

@@ -4,7 +4,7 @@ import { Label } from "@/shared/shadcn/ui/label";
 import { Button } from "@/shared/shadcn/ui/button";
 import { useState } from "react";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/shared/shadcn/ui/select";
-import { duplicateApi, signUpApi } from '@/api/auth';
+import { duplicateIdApi, duplicateNameApi, signUpApi } from '@/api/auth';
 import { useRouter } from "next/navigation";
 import { EyeOpenIcon, EyeNoneIcon } from "@radix-ui/react-icons";
 import useToastHook from "@/shared/hooks/useToastHook";
@@ -36,9 +36,7 @@ const handleEnter = (e : any) => {
   }
 };
 
-const handleDepartmentSelect = (selectedDepartment : any)=>{
-  setDepartment(selectedDepartment);
-}
+
 const checkBeforeSignUpCall = async()=>{
   if (!pwEqual){
     handleFail(`"SignUp 실패", `, `"PassWord와 Verify Password가 서로 다릅니다"`);
@@ -56,10 +54,16 @@ const checkBeforeSignUpCall = async()=>{
     handleFail(`"SignUp 실패", `, `"부서를 선택 해 주세요"`);
     return false;
   }else{
-    const res = await duplicateApi(userID, username);
-    const isNotDuplicated = res.payload;
-    if(!isNotDuplicated){
-      handleFail(`"SignUp 실패", `, `"이미 가입된 ID 또는 이름입니다"`);
+    const res1 = await duplicateIdApi(userID);
+    const idNotDuplicated = res1.payload;
+    if(!idNotDuplicated){
+      handleFail(`"SignUp 실패", `, `"이미 가입된 ID입니다"`);
+      return false;
+    }
+    const res2 = await duplicateNameApi(username);
+    const nameNotDuplicated = res2.payload;
+    if(!nameNotDuplicated){
+      handleFail(`"SignUp 실패", `, `"이미 가입된 이름입니다"`);
       return false;
     }
     return true;
@@ -131,7 +135,7 @@ const signUpHandler = async() =>{
         />
 
         <Label className="mt-2">Select Department</Label>
-        <Select onValueChange={handleDepartmentSelect}>
+        <Select onValueChange={(value)=>{setDepartment(value)}}>
           <SelectTrigger className="selectTrigger">
             <SelectValue placeholder="Department(Select)"></SelectValue>
           </SelectTrigger>
