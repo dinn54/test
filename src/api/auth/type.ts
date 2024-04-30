@@ -36,3 +36,27 @@ export interface duplicateIdResponse{
 export interface duplicateNameResponse{
     userName: string
 }
+
+export interface allVaultsResponse{
+    pool: [
+        {
+            pid: number
+            address: string
+        } 
+    ]
+}
+
+export interface vaultDetailResponse{
+    pool_id: number;
+    pool_address: string;
+    pool_cvtx_amount: string;
+    staked_token: string;
+    reward_token: string;
+    lp_token: string
+    lock_duration: string;
+    reward_second: string;
+    start_timestamp: string;
+    end_timestamp: string;
+    max_pool_limit: string;
+    max_account_limit: string;
+}

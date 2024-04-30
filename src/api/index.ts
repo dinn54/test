@@ -36,7 +36,6 @@ const jwtPrefix = `Bearer`
  */
 // Request : Handler (Header Auth token)
 const requestHandler = (config: InternalAxiosRequestConfig) => {
-
     return config;
 }
 
@@ -58,18 +57,9 @@ const responseHandler = (response: AxiosResponse) => {
 
 // Response Error Handler
 const responseErrHandler = async (error: any) => {
+    console.log("error", error);
     const { error_code, message, timestamp, path } = error.response.data;
-    // // TODO :
-    // // Token Not Valid Error Code 가 있으면 토큰 갈아끼우기
-    // // 현재 만료시간 무제한으로 해뒀는데 안될 경우....
-    // if (
-    //     error_code === CUSTOM_ERROR.INVALID_TOKEN.code ||
-    //     CUSTOM_ERROR.INVALID_HEADER.code
-    // ) {
-    //     const newToken = await signInApi("carrieverse", "cvtx2024");
-    //     // Token 갈아끼우기
-    //     AC_TOKEN = newToken.payload.token;
-    // }
+
     let handledMsg;
     switch(error_code){
         case CUSTOM_ERROR.INVALID_ID.code: 
@@ -96,7 +86,28 @@ const responseErrHandler = async (error: any) => {
         case CUSTOM_ERROR.INSUFFICIENT_ROLE.code:
             handledMsg = '접근 할 수 없는 계정입니다';
             break;
-    }
+        case CUSTOM_ERROR.INVALID_ENVIRONMENT.code:
+            handledMsg = 'env가 유효하지 않습니다("prod|stg|dev")';
+            break;
+        case CUSTOM_ERROR.INVALID_HEADER.code:
+            handledMsg = '유효하지 않은 헤더입니다';
+            break;
+        case CUSTOM_ERROR.INVALID_ADDRESS.code:
+            handledMsg = '유효하지 않은 주소입니다';
+            break;
+        case CUSTOM_ERROR.RPC_ERROR.code:
+            handledMsg = 'RPC error입니다';
+            break;
+        case CUSTOM_ERROR.DB_ERROR.code:
+            handledMsg = 'DB error입니다';
+            break;
+        case CUSTOM_ERROR.INTERNAL_ERROR.code:
+            handledMsg = 'Internal Error입니다';
+            break;
+        case CUSTOM_ERROR.TIMEOUT_ERROR.code:
+            handledMsg = 'Timeout Error입니다';
+            break;
+}
     return Promise.reject(handledMsg);
 }
 

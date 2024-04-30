@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next'
 import './globals.css'
 import { Header } from '@/widgets/header'
@@ -29,7 +30,7 @@ export default function RootLayout({
         <Header />
         {children}
       </ThemeProvider>
-        <Toaster />
+      <Toaster />
       </body>
     </html>
   )

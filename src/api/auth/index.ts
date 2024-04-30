@@ -1,5 +1,5 @@
 import api from '../index';
-import {AuthResponse, duplicateIdResponse, duplicateNameResponse, SignInResponse, SignOutResponse, SignUpResponse, userRoleResponse} from './type';
+import {allVaultsResponse, AuthResponse, duplicateIdResponse, duplicateNameResponse, SignInResponse, SignOutResponse, SignUpResponse, userRoleResponse, vaultDetailResponse} from './type';
 
 const AUTH_ENDPOINT = "auth";
 
@@ -43,4 +43,12 @@ export const userRoleApi = async(user_id: number, role: number) =>{
         user_id, role
     }
     return await api.post<userRoleResponse>(`v1/${AUTH_ENDPOINT}/verify`, body);
+}
+
+export const allVaultsApi = async(env: string)=>{
+    return await api.get<allVaultsResponse>(`v1/clingswap/vault`, {params: {env: env}});
+}
+
+export const vaultDetailApi = async(env:string, pid: number)=>{
+    return await api.get<vaultDetailResponse>(`v1/clingswap/vault/${pid}`, {params: {env: env}});
 }
