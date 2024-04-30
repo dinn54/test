@@ -12,8 +12,9 @@ export default function Home() {
   const router = useRouter();
 
   //acToken -> 없으면 로그인 페이지
-  const checkAcToken = async()=>{
+  const checkToken = async()=>{
     try{
+    
       const userInfo = await authApi();
       // User 계정 정보 업데이트
       console.log(userInfo.payload);
@@ -27,7 +28,7 @@ export default function Home() {
   useEffect(()=>{
     //User가 바뀔때마다 체크
     
-    checkAcToken();
+    checkToken();
     
   },[] /* ,[User] */ )
 

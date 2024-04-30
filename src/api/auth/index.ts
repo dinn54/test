@@ -1,5 +1,5 @@
 import api from '../index';
-import {allVaultsResponse, AuthResponse, duplicateIdResponse, duplicateNameResponse, SignInResponse, SignOutResponse, SignUpResponse, userRoleResponse, vaultDetailResponse} from './type';
+import {allVaultsResponse, AuthResponse, duplicateIdResponse, duplicateNameResponse, RefreshResponse, SignInResponse, SignOutResponse, SignUpResponse, userRoleResponse, vaultDetailResponse} from './type';
 
 const AUTH_ENDPOINT = "auth";
 
@@ -35,7 +35,7 @@ export const duplicateNameApi = async(userName: string)=>{
 }
 
 export const refreshApi = async ()=>{
-
+    return await api.post<RefreshResponse>(`v1/${AUTH_ENDPOINT}/refresh`);
 }
 
 export const userRoleApi = async(user_id: number, role: number) =>{
