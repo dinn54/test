@@ -81,7 +81,7 @@ const responseErrHandler = async (error: any) => {
             handledMsg = '인증 할 수 없습니다';
             break;
         case CUSTOM_ERROR.INVALID_TOKEN.code:
-            handledMsg = '유효하지 않은 토큰입니다';
+            handledMsg = 'Invalid AC_Token';
             break;
         case CUSTOM_ERROR.INSUFFICIENT_ROLE.code:
             handledMsg = '접근 할 수 없는 계정입니다';

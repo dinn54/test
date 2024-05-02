@@ -1,10 +1,10 @@
 'use client'
-import DragDropFeature, { InputDragDrop } from "@/app/hooks/dragAndDropHook";
 import { Button } from "@/shared/shadcn/ui/button"
 import { Input } from "@/shared/shadcn/ui/input"
 import { Label } from "@/shared/shadcn/ui/label"
 import { useState } from "react";
-import {FileUploader} from 'react-drag-drop-files';
+import  ReactDOM, { render }  from "react-dom";
+import CSVReader from 'react-csv-reader'
 
 interface DragDropProps{
     onChangeFile : (file: File | null)=> void;
@@ -17,12 +17,24 @@ interface InputDragDropProps{
     validExtensions?: string[];
 }
 
-const EventTransfer = ()=>{
-    const fileTypes = ["css"];
-    const [file, setFile] = useState(null);
-    const handleFileSelect = (file: File | any) => {
-        setFile(file);
-    }
+const handleCSVFile = () =>{
+
+}
+const handleCSVError = () =>{
+
+}
+const papaparseOptions = {
+    
+}
+
+type totalSendInfo = {
+    totalSendAmount: number;
+    
+}
+
+const Helpers = ()=>{
+    const [totalSendAmount, setTotalSendAmount] = useState<number>(0);
+    
     
 
     return (
@@ -31,15 +43,16 @@ const EventTransfer = ()=>{
             <Label>Event Transfer</Label> 
             <div className='my-2 flex'>
                 <div className='flex'>
-                    {/* <InputDragDrop
-                        onChangeFile={handleFileSelect}
-                        description="파일을 올려 주세요"
-                        validExtensions={['csv']}
-                    ></InputDragDrop> */}
-                    {/* <DragDropFeature 
-                        onChangeFile={handleFileSelect}
-                        description=""
-                    ></DragDropFeature> */}
+                <CSVReader
+                    cssClass="csv-reader-input"
+                    label="CSV 파일을 올려주세요"
+                    onFileLoaded={handleCSVFile}
+                    onError={handleCSVError}
+                    parserOptions={papaparseOptions}
+                    inputId="ObiWan"
+                    inputName="ObiWan"
+                    inputStyle={{color: 'red'}}
+                />
                     <Button
                         className='mx-5'
                         variant={'outline'}
@@ -48,13 +61,13 @@ const EventTransfer = ()=>{
                     </Button>
                 </div>
                 <div className='flex justify-between'>
-                    <div className='flex flex-col'>
+                    {/* <div className='flex flex-col'>
                         <Label className='ml-4 mt-6'>전송 토큰 총 량: </Label>
                         <Label className='ml-4 mt-3'>전송토큰: </Label>
                         <Label className='ml-4 mt-3'>전송 유저 수: </Label>
                         <Label className='ml-4 mt-3'>첫번째 유저: </Label>
                         <Label className='ml-4 mt-3'>마지막 유저: </Label>
-                    </div>
+                    </div> */}
                     <Button
                         className='flex mx-5'
                         variant={'outline'}
@@ -97,4 +110,4 @@ const EventTransfer = ()=>{
     )
 }
 
-export default EventTransfer
+export default Helpers

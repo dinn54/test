@@ -37,7 +37,7 @@ const SignIn = ()=> {
         const rf_token = res.payload.rf_token;
         handleSuccess("login", "success")
 
-        //token 관리 로직 코드 필요
+        //User 정보 업데이트
         router.push("/");
     } catch (error: any) {
       handleFail(`"Invalid Data", `,`"${error.message}"`);
