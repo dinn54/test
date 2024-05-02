@@ -6,10 +6,10 @@ import { Contract, ethers } from 'ethers'
 export interface IInfoEnvironments {
   dev: string | null
   stg: string | null
-  prod: string | null
+  prod: string
 }
 
 export interface IContractInformation {
   address: IInfoEnvironments
-  abi: Object
+  abi: any
 }

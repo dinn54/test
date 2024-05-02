@@ -4,12 +4,19 @@ import { Input } from "@/shared/shadcn/ui/input"
 import { Label } from "@/shared/shadcn/ui/label"
 import { useEffect, useState } from "react";
 import CSVReader from 'react-csv-reader'
-import { Contract, ContractFactory, ethers } from "ethers";
+import { Contract, Signer, ethers,  } from "ethers";
 import useToastHook from "@/shared/hooks/useToastHook";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/shared/shadcn/ui/table";
 import { useRecoilState } from "recoil";
-import { AccountState, ChainNetworkState } from "@/app/states/account";
+import { AccountState, ChainNetworkState, SignerState } from "@/app/states/account";
+import { CVTX_INFO } from "@/constants/contracts/polygon/tokens";
 
+interface ContractFactory{
+    fandomTokenContract: Contract;
+    cvtxTokenContract: Contract;
+    tokenRouterContract: Contract;
+    clingEventContract: Contract;
+}
 
 interface Props {
     ContractFactory: {
@@ -41,34 +48,37 @@ const handleCSVError = () =>{
 // 3-1. 부족하다면 Approve로 할당하고 토큰 전송
 // 4-1. 전송하고 나면 최근 전송 내역에 출력
 
-
-const Helpers = ({ContractFactory}: Props)=>{
+const EventTransfer = ({ContractFactory}: Props )=>{
     const [Account, setAccount] = useRecoilState(AccountState);
     const [Network, setNetwork] = useRecoilState(ChainNetworkState);
     
 
     const [totalSendAmount, setTotalSendAmount] = useState<number>(0);
     const [TransferList, setTransferList] = useState<ITransferListData[]>([]);
-    const [AllowedBalance, setAllowedBalance] = useState("0.00");
+    const [AllowedBalance, setAllowedBalance] = useState<number>(0);
     const [selectedFileName, setSelectedFileName] = useState(null);
     const [duplicateEOA, setDuplicateEOA] = useState<string[]>([]);
     
     const {handleSuccess, handleFail} = useToastHook();
 
     useEffect(()=>{
+        setAccount("0xbe35ac51623803f8a647b20a2d7019fc1f0503d4");
+        console.log(Account, Network)
         if (Account){
             const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
+            const signer = provider.getSigner()
             console.log(signer)
+
         }
     })
 
 
     const checkAllowanceCVTX = async() =>{
         try{
-            const allowance = await ContractFactory?.cvtxTokenContract.allowance("",ContractFactory.clingEventContract.target)
-            const result = ethers.utils.formatUnits(allowance.toString(), "ether");
-            console.log(result);
+            const allowance = await ContractFactory?.cvtxTokenContract.allowance(Account, ContractFactory.clingEventContract.address)
+            console.log(typeof(allowance));
+            console.log("checkAllowance", allowance);
+            setAllowedBalance(allowance);
         }catch (e:any){
             console.log(`Check Allowance Error`);
             console.log(e);
@@ -95,6 +105,31 @@ const Helpers = ({ContractFactory}: Props)=>{
             handleFail("approve Fail", e);
         }
     }
+    const sendERC20BatchTransfer = async () => {
+        try {
+            const ESTGas = await ContractFactory?.clingEventContract.doEventTransfer.estimateGas(TransferList);
+            await ContractFactory?.clingEventContract.doEventTransfer.staticCallResult(TransferList);
+            const tx = await ContractFactory?.clingEventContract.doEventTransfer(TransferList, {
+                gasLimit: ESTGas
+            });
+
+            await tx.wait();
+
+            handleSuccess('ERC20 대량 전송', tx.hash);
+        } catch (e : any) {
+            if (e.reason === "ClingEvent: NOT_TRANSFER_ADMIN") {
+                handleFail('ERC20 대량 전송', e.reason);
+            } else {
+                handleFail('ERC20 대량 전송', e.message)
+            }
+            
+        } finally {
+            // 초기화
+            setTransferList([]);
+            setAllowedBalance(0);
+            setSelectedFileName(null);
+        }
+    };
 
     const handleCSVFile = (data: ITransferListProps[], fileInfo: any, originalFile: any)=>{
         let result: ITransferListData[] = [];
@@ -161,18 +196,20 @@ const Helpers = ({ContractFactory}: Props)=>{
                     />
                     </div>
                     <div className='flex flex-col'>
+
                         <Label className='ml-4 mt-6'>전송 토큰 총 량: {totalSendAmount} </Label>
                         <Label className='ml-4 mt-3'>전송토큰: CVTX</Label>
-                        <Label className='ml-4 mt-3'>전송 유저 수: </Label>
-                        <Label className='ml-4 mt-3'>첫번째 유저: </Label>
-                        <Label className='ml-4 mt-3'>마지막 유저: </Label>
+                        <Label className='ml-4 mt-3'>전송 유저 수: {TransferList?.length- duplicateEOA.length}</Label>
+                        <Label className='ml-4 mt-3'>첫번째 유저: {TransferList[0]?.to}</Label>
+                        <Label className='ml-4 mt-3'>마지막 유저: {TransferList[TransferList.length-1]?.to}</Label>
                     </div>
                 </div>
                 <Button
                     className='flex m-5'
                     variant={'outline'}
                     disabled={false}
-                    > Approve | 전송하기
+                    onClick={ AllowedBalance<totalSendAmount? ()=>approveCVTX():()=>sendERC20BatchTransfer()}
+                    > {AllowedBalance<totalSendAmount? "Approve" : "전송하기"}
                 </Button>
                 </div>
             </div>
@@ -192,8 +229,8 @@ const Helpers = ({ContractFactory}: Props)=>{
                 </TableHeader>
                 <TableBody>
                 <TableRow>
-                    {TransferList.map((list)=>(
-                        <TableCell>{list.to}</TableCell>
+                    {TransferList.map((list, key)=>(
+                        <TableCell key={key}>{list.to}</TableCell>
                     ))}
                 </TableRow>
                 </TableBody>
@@ -205,4 +242,4 @@ const Helpers = ({ContractFactory}: Props)=>{
     )
 }
 
-export default Helpers
+export default EventTransfer
