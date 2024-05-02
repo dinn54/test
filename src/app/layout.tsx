@@ -6,6 +6,8 @@ import { Footer } from '@/widgets/footer'
 import { ThemeProvider } from './themeProvider'
 import { useTheme } from "next-themes"
 import { Toaster } from '@/shared/shadcn/ui/toaster'
+import { RecoilRoot } from 'recoil'
+import RecoilRootWrapper from './recoilWrapper'
 
 
 export const metadata: Metadata = {
@@ -28,7 +30,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
         <Header />
-        {children}
+        <RecoilRootWrapper>{children}</RecoilRootWrapper>
       </ThemeProvider>
       <Toaster />
       </body>
