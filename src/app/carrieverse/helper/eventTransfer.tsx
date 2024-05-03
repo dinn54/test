@@ -9,23 +9,14 @@ import useToastHook from "@/shared/hooks/useToastHook";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/shared/shadcn/ui/table";
 import { useRecoilState } from "recoil";
 import { AccountState, ChainNetworkState, SignerState } from "@/app/states/account";
-import { CVTX_INFO } from "@/constants/contracts/polygon/tokens";
+import { CVTX_INFO, FDX_INFO } from "@/constants/contracts/polygon/tokens";
+import { CVNFT_TOKENROUTER_INFO } from "@/constants/contracts/polygon/cvnft";
+import { CLINGEVENT_INFO } from "@/constants/contracts/polygon/helper";
+import ConnectMetamask from "@/features/metamask/connectMetamask";
+import DisconnectMetamask from "@/features/metamask/disconnectMetamask";
+import GetAccount from "@/features/metamask/getAccount";
+import { clingEventProviderContract } from "./contractProvider";
 
-interface ContractFactory{
-    fandomTokenContract: Contract;
-    cvtxTokenContract: Contract;
-    tokenRouterContract: Contract;
-    clingEventContract: Contract;
-}
-
-interface Props {
-    ContractFactory: {
-        fandomTokenContract: Contract;
-        cvtxTokenContract: Contract;
-        tokenRouterContract: Contract;
-        clingEventContract: Contract;
-    } | null;
-}
 
 interface ITransferListProps{
     to: string;
@@ -35,6 +26,7 @@ interface ITransferListData{
     to: string;
     amount: number
 }
+
 
 
 const handleCSVError = () =>{
@@ -48,7 +40,65 @@ const handleCSVError = () =>{
 // 3-1. 부족하다면 Approve로 할당하고 토큰 전송
 // 4-1. 전송하고 나면 최근 전송 내역에 출력
 
-const EventTransfer = ({ContractFactory}: Props )=>{
+const EventTransfer = ( )=>{
+    const createContract = ()=>{    
+        const provider= new ethers.providers.Web3Provider(window.ethereum)
+
+        const cvtxProviderContract = new Contract(
+            CVTX_INFO.address.prod,
+            CVTX_INFO.abi,
+            provider
+        );
+        
+        const fandomProviderContract  = new Contract(
+            FDX_INFO.address.prod,
+            FDX_INFO.abi,
+            provider
+        );
+        
+        const tokenRouterProviderContract  = new Contract(
+            CVNFT_TOKENROUTER_INFO.address.prod,
+            CVNFT_TOKENROUTER_INFO.abi,
+            provider
+        );
+        
+         const clingEventProviderContract  = new Contract(
+            CLINGEVENT_INFO.address.prod,
+            CLINGEVENT_INFO.abi,
+            provider
+        );
+        return [cvtxProviderContract, fandomProviderContract, tokenRouterProviderContract, clingEventProviderContract];
+    }
+   
+    // const contracts = createContract();
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum).getSigner();
+    const clingEventProviderContract = new Contract(
+            CLINGEVENT_INFO.address.prod,
+            CLINGEVENT_INFO.abi,
+            provider
+
+    )
+
+    const callContractFunction = async ()=>{
+        try {
+            const provider = new ethers.providers.Web3Provider(window.ethereum)
+            const signer = provider.getSigner();
+
+            const cvtxContract = new Contract(
+                CVTX_INFO.address.prod,
+                CVTX_INFO.abi,
+                signer
+            );
+            console.log(Account);
+            const res = await cvtxContract.functions.allowance(Account, clingEventProviderContract.address);
+            console.log(`res`, res);
+        }catch(e:any){
+            console.log(e);
+        }
+    }
+
+
     const [Account, setAccount] = useRecoilState(AccountState);
     const [Network, setNetwork] = useRecoilState(ChainNetworkState);
     
@@ -61,22 +111,29 @@ const EventTransfer = ({ContractFactory}: Props )=>{
     
     const {handleSuccess, handleFail} = useToastHook();
 
+    const callBalance = () =>{
+        const balance = provider
+    }
     useEffect(()=>{
-        setAccount("0xbe35ac51623803f8a647b20a2d7019fc1f0503d4");
+        // setAccount("0xbe35ac51623803f8a647b20a2d7019fc1f0503d4");
         console.log(Account, Network)
-        if (Account){
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner()
-            console.log(signer)
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const balance = provider.getSigner().getBalance().then((value)=>{
+            return ethers.utils.formatUnits(value, "ether");
+        })
+        balance.then(console.log)
+        callContractFunction();
 
-        }
-    })
+        // DisconnectMetamask();
+        ConnectMetamask()
+        GetAccount().then(address=> setAccount(address));
+
+    }, [])
 
 
     const checkAllowanceCVTX = async() =>{
         try{
-            const allowance = await ContractFactory?.cvtxTokenContract.allowance(Account, ContractFactory.clingEventContract.address)
-            console.log(typeof(allowance));
+            const allowance = await cvtxTokenContract.allowance(Account, clingEventContract.address)
             console.log("checkAllowance", allowance);
             setAllowedBalance(allowance);
         }catch (e:any){
@@ -93,12 +150,15 @@ const EventTransfer = ({ContractFactory}: Props )=>{
             return;
         }
         const amountToWei = ethers.utils.parseEther(totalSendAmount.toString());
+        console.log("amountTowei", amountToWei)
 
         try{
-            const estimatedGas = await ContractFactory?.cvtxTokenContract.approve.estimateGas(ContractFactory.clingEventContract.target, amountToWei);
-            const tx = await ContractFactory?.cvtxTokenContract.approve(ContractFactory.clingEventContract.target, amountToWei, {
+            const estimatedGas = await cvtxTokenContract.approve.estimateGas(clingEventContract.address, amountToWei);
+            console.log("estimateGas", estimatedGas);
+            const tx = await cvtxTokenContract.approve(clingEventContract.address, amountToWei, {
                 gasLimit: estimatedGas
             });
+            console.log("tx", tx)
             handleSuccess("approve success", tx.hash)
             
         }catch(e: any){
@@ -107,9 +167,9 @@ const EventTransfer = ({ContractFactory}: Props )=>{
     }
     const sendERC20BatchTransfer = async () => {
         try {
-            const ESTGas = await ContractFactory?.clingEventContract.doEventTransfer.estimateGas(TransferList);
-            await ContractFactory?.clingEventContract.doEventTransfer.staticCallResult(TransferList);
-            const tx = await ContractFactory?.clingEventContract.doEventTransfer(TransferList, {
+            const ESTGas = await clingEventContract.doEventTransfer.estimateGas(TransferList);
+            await clingEventContract.doEventTransfer.staticCallResult(TransferList);
+            const tx = await clingEventContract.doEventTransfer(TransferList, {
                 gasLimit: ESTGas
             });
 
@@ -153,6 +213,7 @@ const EventTransfer = ({ContractFactory}: Props )=>{
                 }
             })
         })
+        
         console.log(result, duplicateEOA);
         setTotalSendAmount(totalSendAmount);
         setDuplicateEOA(duplicateTo)
@@ -176,7 +237,9 @@ const EventTransfer = ({ContractFactory}: Props )=>{
             <Label>Event Transfer</Label> 
             <div className='my-2 flex justify-between'>
                 <div className='flex'>
-                    <div className="m-5" >
+                    <div className="m-5 flex flex-col content-center justify-between" >
+                    <Label className="">선택된 파일 - </Label>
+                    <Label className="">{selectedFileName}</Label><br/>
                     <CSVReader
                         cssClass="csv-reader-input"
                         label="CSV 파일을 올려주세요"
@@ -200,6 +263,7 @@ const EventTransfer = ({ContractFactory}: Props )=>{
                         <Label className='ml-4 mt-6'>전송 토큰 총 량: {totalSendAmount} </Label>
                         <Label className='ml-4 mt-3'>전송토큰: CVTX</Label>
                         <Label className='ml-4 mt-3'>전송 유저 수: {TransferList?.length- duplicateEOA.length}</Label>
+                        <Label className='ml-4 mt-3'>중복 유저 수: {duplicateEOA.length}</Label>
                         <Label className='ml-4 mt-3'>첫번째 유저: {TransferList[0]?.to}</Label>
                         <Label className='ml-4 mt-3'>마지막 유저: {TransferList[TransferList.length-1]?.to}</Label>
                     </div>
