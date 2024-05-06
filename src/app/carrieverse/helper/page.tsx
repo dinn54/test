@@ -5,26 +5,26 @@ import { Contract, ethers } from "ethers";
 import { CVTX_INFO, FDX_INFO } from "@/constants/contracts/polygon/tokens";
 import { CVNFT_TOKENROUTER_INFO } from "@/constants/contracts/polygon/cvnft";
 import { CLINGEVENT_INFO } from "@/constants/contracts/polygon/helper";
-import { clingEventProviderContract, cvtxProviderContract, fandomProviderContract, tokenRouterProviderContract } from "./contractProvider";
+import { createContract } from "./createContract";
 
 interface ContractFactory{
-    fandomTokenContract: Contract;
     cvtxTokenContract: Contract;
+    fandomTokenContract: Contract;
     tokenRouterContract: Contract;
     clingEventContract: Contract;
 }
 const helpher = () =>{
-
+    const contracts = createContract();
     const Factory :ContractFactory = {
-        fandomTokenContract: fandomProviderContract,
-        cvtxTokenContract: cvtxProviderContract,
-        tokenRouterContract: tokenRouterProviderContract,
-        clingEventContract: clingEventProviderContract
+        cvtxTokenContract: contracts[0],
+        fandomTokenContract: contracts[1],
+        tokenRouterContract: contracts[2],
+        clingEventContract: contracts[3]
     }
     const [ContractFactory, setContractFactory] = useState<ContractFactory>(Factory);
 
     return (
-        <EventTransfer ContractFactory={ContractFactory}/>
+        <EventTransfer Factory={ContractFactory}/>
     )
 }
 

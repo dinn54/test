@@ -1,4 +1,5 @@
 const DisconnectMetamask = async() =>{
+    console.log("enter disconnect");
     try{
         return await window.ethereum.request({
             "method": "wallet_revokePermissions",

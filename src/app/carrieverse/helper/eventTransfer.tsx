@@ -9,14 +9,16 @@ import useToastHook from "@/shared/hooks/useToastHook";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/shared/shadcn/ui/table";
 import { useRecoilState } from "recoil";
 import { AccountState, ChainNetworkState, SignerState } from "@/app/states/account";
-import { CVTX_INFO, FDX_INFO } from "@/constants/contracts/polygon/tokens";
-import { CVNFT_TOKENROUTER_INFO } from "@/constants/contracts/polygon/cvnft";
-import { CLINGEVENT_INFO } from "@/constants/contracts/polygon/helper";
 import ConnectMetamask from "@/features/metamask/connectMetamask";
 import DisconnectMetamask from "@/features/metamask/disconnectMetamask";
 import GetAccount from "@/features/metamask/getAccount";
-import { clingEventProviderContract } from "./contractProvider";
 
+interface ContractFactory{
+    cvtxTokenContract: Contract;
+    fandomTokenContract: Contract;
+    tokenRouterContract: Contract;
+    clingEventContract: Contract;
+}
 
 interface ITransferListProps{
     to: string;
@@ -40,64 +42,8 @@ const handleCSVError = () =>{
 // 3-1. 부족하다면 Approve로 할당하고 토큰 전송
 // 4-1. 전송하고 나면 최근 전송 내역에 출력
 
-const EventTransfer = ( )=>{
-    const createContract = ()=>{    
-        const provider= new ethers.providers.Web3Provider(window.ethereum)
-
-        const cvtxProviderContract = new Contract(
-            CVTX_INFO.address.prod,
-            CVTX_INFO.abi,
-            provider
-        );
-        
-        const fandomProviderContract  = new Contract(
-            FDX_INFO.address.prod,
-            FDX_INFO.abi,
-            provider
-        );
-        
-        const tokenRouterProviderContract  = new Contract(
-            CVNFT_TOKENROUTER_INFO.address.prod,
-            CVNFT_TOKENROUTER_INFO.abi,
-            provider
-        );
-        
-         const clingEventProviderContract  = new Contract(
-            CLINGEVENT_INFO.address.prod,
-            CLINGEVENT_INFO.abi,
-            provider
-        );
-        return [cvtxProviderContract, fandomProviderContract, tokenRouterProviderContract, clingEventProviderContract];
-    }
-   
-    // const contracts = createContract();
-
-    const provider = new ethers.providers.Web3Provider(window.ethereum).getSigner();
-    const clingEventProviderContract = new Contract(
-            CLINGEVENT_INFO.address.prod,
-            CLINGEVENT_INFO.abi,
-            provider
-
-    )
-
-    const callContractFunction = async ()=>{
-        try {
-            const provider = new ethers.providers.Web3Provider(window.ethereum)
-            const signer = provider.getSigner();
-
-            const cvtxContract = new Contract(
-                CVTX_INFO.address.prod,
-                CVTX_INFO.abi,
-                signer
-            );
-            console.log(Account);
-            const res = await cvtxContract.functions.allowance(Account, clingEventProviderContract.address);
-            console.log(`res`, res);
-        }catch(e:any){
-            console.log(e);
-        }
-    }
-
+const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
+    console.log("props",Factory)
 
     const [Account, setAccount] = useRecoilState(AccountState);
     const [Network, setNetwork] = useRecoilState(ChainNetworkState);
@@ -111,38 +57,32 @@ const EventTransfer = ( )=>{
     
     const {handleSuccess, handleFail} = useToastHook();
 
-    const callBalance = () =>{
-        const balance = provider
-    }
+
     useEffect(()=>{
-        // setAccount("0xbe35ac51623803f8a647b20a2d7019fc1f0503d4");
+        ConnectMetamask()
+        GetAccount().then((value)=>setAccount(value))
+        checkCVTXallowance()
+
         console.log(Account, Network)
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const balance = provider.getSigner().getBalance().then((value)=>{
             return ethers.utils.formatUnits(value, "ether");
         })
-        balance.then(console.log)
-        callContractFunction();
-
-        // DisconnectMetamask();
-        ConnectMetamask()
-        GetAccount().then(address=> setAccount(address));
+        balance.then(console.log);
 
     }, [])
 
-
-    const checkAllowanceCVTX = async() =>{
-        try{
-            const allowance = await cvtxTokenContract.allowance(Account, clingEventContract.address)
-            console.log("checkAllowance", allowance);
-            setAllowedBalance(allowance);
-        }catch (e:any){
-            console.log(`Check Allowance Error`);
+    const checkCVTXallowance = async ()=>{
+        try {
+            console.log(Account?.at(0), Factory.clingEventContract.address)
+            const res = await Factory.cvtxTokenContract.functions.allowance(Account?.at(0), Factory.clingEventContract.address);
+            setAllowedBalance(res);
+            console.log(`res`, res);
+        }catch(e:any){
             console.log(e);
-            handleFail("Allowance 에러", e)
         }
-        
     }
+
 
     const approveCVTX = async () =>{
         if ( totalSendAmount === 0){
@@ -153,9 +93,9 @@ const EventTransfer = ( )=>{
         console.log("amountTowei", amountToWei)
 
         try{
-            const estimatedGas = await cvtxTokenContract.approve.estimateGas(clingEventContract.address, amountToWei);
+            const estimatedGas = await Factory.cvtxTokenContract.estimateGas.approve(Factory.clingEventContract.address, amountToWei);
             console.log("estimateGas", estimatedGas);
-            const tx = await cvtxTokenContract.approve(clingEventContract.address, amountToWei, {
+            const tx = await Factory.cvtxTokenContract.approve(Factory.clingEventContract.address, amountToWei, {
                 gasLimit: estimatedGas
             });
             console.log("tx", tx)
@@ -167,9 +107,9 @@ const EventTransfer = ( )=>{
     }
     const sendERC20BatchTransfer = async () => {
         try {
-            const ESTGas = await clingEventContract.doEventTransfer.estimateGas(TransferList);
-            await clingEventContract.doEventTransfer.staticCallResult(TransferList);
-            const tx = await clingEventContract.doEventTransfer(TransferList, {
+            const ESTGas = await Factory.clingEventContract.estimateGas.doEventTransfer(TransferList);
+            await Factory.clingEventContract.callStatic.doEventTranfser(TransferList);
+            const tx = await Factory.clingEventContract.functionsdoEventTransfer(TransferList, {
                 gasLimit: ESTGas
             });
 
@@ -217,8 +157,7 @@ const EventTransfer = ( )=>{
         console.log(result, duplicateEOA);
         setTotalSendAmount(totalSendAmount);
         setDuplicateEOA(duplicateTo)
-
-        checkAllowanceCVTX()
+        checkCVTXallowance()
         setSelectedFileName(fileInfo.name);
         setTransferList(result);
         
