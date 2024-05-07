@@ -7,13 +7,13 @@ import { Contract, ethers } from "ethers";
 export const createContract = () =>{
     const signer = new ethers.providers.Web3Provider(window.ethereum).getSigner();
     const cvtxProviderContract = new Contract(
-        CVTX_INFO.address.prod,
+        CVTX_INFO.address.stg!,
         CVTX_INFO.abi,
         signer
     );
     
     const fandomProviderContract  = new Contract(
-        FDX_INFO.address.prod,
+        FDX_INFO.address.stg!,
         FDX_INFO.abi,
         signer
     );
@@ -25,7 +25,7 @@ export const createContract = () =>{
     );
     
     const clingEventProviderContract  = new Contract(
-        CLINGEVENT_INFO.address.prod,
+        CLINGEVENT_INFO.address.stg!,
         CLINGEVENT_INFO.abi,
         signer
     );

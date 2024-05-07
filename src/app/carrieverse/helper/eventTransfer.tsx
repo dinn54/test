@@ -12,6 +12,7 @@ import { AccountState, ChainNetworkState, SignerState } from "@/app/states/accou
 import ConnectMetamask from "@/features/metamask/connectMetamask";
 import DisconnectMetamask from "@/features/metamask/disconnectMetamask";
 import GetAccount from "@/features/metamask/getAccount";
+import txLogRecorder from "@/app/hooks/components/txLogRecorder";
 
 interface ContractFactory{
     cvtxTokenContract: Contract;
@@ -22,11 +23,11 @@ interface ContractFactory{
 
 interface ITransferListProps{
     to: string;
-    amount: number
+    amount: BigInt
 }
 interface ITransferListData{
     to: string;
-    amount: number
+    amount: BigInt
 }
 
 
@@ -43,7 +44,6 @@ const handleCSVError = () =>{
 // 4-1. 전송하고 나면 최근 전송 내역에 출력
 
 const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
-    console.log("props",Factory)
 
     const [Account, setAccount] = useRecoilState(AccountState);
     const [Network, setNetwork] = useRecoilState(ChainNetworkState);
@@ -76,8 +76,9 @@ const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
         try {
             console.log(Account?.at(0), Factory.clingEventContract.address)
             const res = await Factory.cvtxTokenContract.functions.allowance(Account?.at(0), Factory.clingEventContract.address);
-            setAllowedBalance(res);
-            console.log(`res`, res);
+            console.log(Number(BigInt(res)));
+            setAllowedBalance(Number(BigInt(res)));
+            console.log(`Allowance response : `, BigInt(res.toString()));
         }catch(e:any){
             console.log(e);
         }
@@ -94,26 +95,39 @@ const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
 
         try{
             const estimatedGas = await Factory.cvtxTokenContract.estimateGas.approve(Factory.clingEventContract.address, amountToWei);
-            console.log("estimateGas", estimatedGas);
+            console.log("estimateGas", ethers.utils.formatUnits(estimatedGas,"ether"));
             const tx = await Factory.cvtxTokenContract.approve(Factory.clingEventContract.address, amountToWei, {
                 gasLimit: estimatedGas
             });
             console.log("tx", tx)
+            setAllowedBalance(totalSendAmount);
+            txLogRecorder("CVTX-Approve", tx.hash)
             handleSuccess("approve success", tx.hash)
             
         }catch(e: any){
+            // Test를 위한 임시 allowance
+            console.log("Fail Approve", AllowedBalance);
             handleFail("approve Fail", e);
         }
     }
+
     const sendERC20BatchTransfer = async () => {
         try {
             const ESTGas = await Factory.clingEventContract.estimateGas.doEventTransfer(TransferList);
-            await Factory.clingEventContract.callStatic.doEventTranfser(TransferList);
-            const tx = await Factory.clingEventContract.functionsdoEventTransfer(TransferList, {
+            console.log("ESTGas", ethers.utils.formatUnits(ESTGas));
+            // 불필요한 가스 소비를 막기 위해 Callstatic으로 정상적인 트랜잭션요청인지 확인
+            await Factory.clingEventContract.callStatic.doEventTransfer(TransferList);
+            console.log("error after callstatic");
+            const tx = await Factory.clingEventContract.functions.doEventTransfer(TransferList, {
                 gasLimit: ESTGas
             });
+            console.log(tx);
 
             await tx.wait();
+            console.log("TX success-------------------")
+            // Tx를 날렸는데 IERC20의 Allowance를 소비하지 않음..
+            const res = await Factory.cvtxTokenContract.functions.allowance(Account?.at(0), Factory.clingEventContract.address);
+            console.log("Show my Allowance after Tx success", ethers.utils.formatUnits(BigInt(res)));
 
             handleSuccess('ERC20 대량 전송', tx.hash);
         } catch (e : any) {
@@ -126,6 +140,8 @@ const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
         } finally {
             // 초기화
             setTransferList([]);
+            setTotalSendAmount(0);
+            setDuplicateEOA([]);
             setAllowedBalance(0);
             setSelectedFileName(null);
         }
@@ -137,14 +153,12 @@ const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
         let duplicateTo : string[] = [];
 
         data.forEach((item)=>{
-            totalSendAmount += item.amount;
-            let bigintAmount = ethers.utils.parseEther(item.amount.toString());
+            totalSendAmount += parseInt(item.amount.toString())
 
             result.push({
                 to: item.to,
-                amount: Number(bigintAmount)
+                amount: item.amount
             })
-
             result.forEach((item, index)=>{
                 const isDuplicate = result.slice(index + 1).some((original) => original.to === item.to);
 
@@ -154,6 +168,7 @@ const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
             })
         })
         
+
         console.log(result, duplicateEOA);
         setTotalSendAmount(totalSendAmount);
         setDuplicateEOA(duplicateTo)
@@ -212,7 +227,8 @@ const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
                     variant={'outline'}
                     disabled={false}
                     onClick={ AllowedBalance<totalSendAmount? ()=>approveCVTX():()=>sendERC20BatchTransfer()}
-                    > {AllowedBalance<totalSendAmount? "Approve" : "전송하기"}
+                >   
+                {AllowedBalance<totalSendAmount? "Approve" : "전송하기"}
                 </Button>
                 </div>
             </div>

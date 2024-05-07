@@ -1,5 +1,5 @@
 import api from '../index';
-import {allVaultsResponse, AuthResponse, duplicateIdResponse, duplicateNameResponse, RefreshResponse, SignInResponse, SignOutResponse, SignUpResponse, userRoleResponse, vaultDetailResponse} from './type';
+import {allVaultsResponse, AuthResponse, duplicateIdResponse, duplicateNameResponse, RefreshResponse, SignInResponse, SignOutResponse, SignUpResponse, txLogResponse, userRoleResponse, vaultDetailResponse} from './type';
 
 const AUTH_ENDPOINT = "auth";
 
@@ -51,4 +51,13 @@ export const allVaultsApi = async(env: string)=>{
 
 export const vaultDetailApi = async(env:string, pid: number)=>{
     return await api.get<vaultDetailResponse>(`v1/clingswap/vault/${pid}`, {params: {env: env}});
+}
+
+export const txLogsApi = async(
+    eoa: string,
+    actionName: string,
+    network: string,
+    txHash: string)=>{
+    const body={eoa, actionName, network, txHash}
+    return await api.post<txLogResponse>(`v1/${AUTH_ENDPOINT}/tx-logs`, body);
 }

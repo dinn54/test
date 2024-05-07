@@ -60,3 +60,15 @@ export interface vaultDetailResponse{
     max_pool_limit: string;
     max_account_limit: string;
 }
+
+export interface txLogResponse{
+    id: number
+}
+
+export interface txLogUserPageLimitResponse{
+
+}
+
+export interface txLogActionNamePageLimitResponse{
+
+}
