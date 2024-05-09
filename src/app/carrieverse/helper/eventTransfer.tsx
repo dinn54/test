@@ -66,20 +66,24 @@ const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
 
         console.log(Account, Network)
         const provider = new ethers.providers.Web3Provider(window.ethereum)
+        const signer = provider.getSigner();
+        signer.getAddress().then((address) => {
+            setAccount(address)
+        })
+
         const balance = provider.getSigner().getBalance().then((value)=>{
             return ethers.utils.formatUnits(value, "ether");
         })
         balance.then(console.log);
         console.log(Factory.clingEventContract)
-        console.log("provider", provider)
-        
-
     }, [Account])
 
     const checkCVTXallowance = async ()=>{
         try {
             console.log("check",Account, Factory.clingEventContract.address)
-            const res = await Factory.cvtxTokenContract.functions.allowance(Account![1], Factory.clingEventContract.address);
+            console.log(`Account : ${Account}`);
+            console.log(Factory.cvtxTokenContract);
+            const res = await Factory.cvtxTokenContract.functions.allowance(Account, Factory.clingEventContract.address);
             console.log(Number(BigInt(res)));
             setAllowedBalance(Number(BigInt(res)));
             console.log(`Allowance response : `, BigInt(res.toString()));
@@ -105,7 +109,7 @@ const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
             });
             console.log("tx", tx)
             setAllowedBalance(totalSendAmount);
-            txLogRecorder("CVTX-Approve", tx.hash)
+            // txLogRecorder("CVTX-Approve", tx.hash)
             handleSuccess("approve success", tx.hash)
             
         }catch(e: any){

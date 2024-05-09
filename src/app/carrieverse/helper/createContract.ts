@@ -5,7 +5,8 @@ import { CVTX_INFO, FDX_INFO } from "@/constants/contracts/polygon/tokens";
 import { Contract, ethers } from "ethers";
 
 export const createContract = () =>{
-    const signer = new ethers.providers.Web3Provider(window.ethereum).getSigner();
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
     const cvtxProviderContract = new Contract(
         CVTX_INFO.address.stg!,
         CVTX_INFO.abi,
