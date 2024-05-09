@@ -13,6 +13,7 @@ import ConnectMetamask from "@/features/metamask/connectMetamask";
 import DisconnectMetamask from "@/features/metamask/disconnectMetamask";
 import GetAccount from "@/features/metamask/getAccount";
 import txLogRecorder from "@/app/hooks/components/txLogRecorder";
+import { CLINGEVENT_INFO } from "@/constants/contracts/polygon/helper";
 
 interface ContractFactory{
     cvtxTokenContract: Contract;
@@ -60,22 +61,25 @@ const EventTransfer = ({Factory}: {Factory: ContractFactory})=>{
 
     useEffect(()=>{
         ConnectMetamask()
-        GetAccount().then((value)=>setAccount(value))
+        
         checkCVTXallowance()
 
         console.log(Account, Network)
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
         const balance = provider.getSigner().getBalance().then((value)=>{
             return ethers.utils.formatUnits(value, "ether");
         })
         balance.then(console.log);
+        console.log(Factory.clingEventContract)
+        console.log("provider", provider)
+        
 
-    }, [])
+    }, [Account])
 
     const checkCVTXallowance = async ()=>{
         try {
-            console.log(Account?.at(0), Factory.clingEventContract.address)
-            const res = await Factory.cvtxTokenContract.functions.allowance(Account?.at(0), Factory.clingEventContract.address);
+            console.log("check",Account, Factory.clingEventContract.address)
+            const res = await Factory.cvtxTokenContract.functions.allowance(Account![1], Factory.clingEventContract.address);
             console.log(Number(BigInt(res)));
             setAllowedBalance(Number(BigInt(res)));
             console.log(`Allowance response : `, BigInt(res.toString()));

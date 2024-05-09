@@ -81,7 +81,7 @@ export const CLINGEVENT_INFO: IContractInformation = {
   ],
   address: {
     dev: null,
-    stg: '0x05155f5C517A86baAF1cf91254b20919c345fC47',
+    stg: '0xe5Dc74175856F1219BB2ddBa4b2d3023ED33C0c0',
     prod: '0x6D52583373BA8D0E3D695A2f8a1F5eFE9F06765E',
   },
 }

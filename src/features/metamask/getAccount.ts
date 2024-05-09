@@ -1,9 +1,10 @@
 const GetAccount = async()=>{
     try{
-        return await window.ethereum.request({
+        const value = await window.ethereum.request({
         "method": "eth_accounts",
-        "params": []
-    })}catch(e : any){
+        "params": []});
+        return value;
+    }catch(e : any){
         console.log(e);
     }
 }

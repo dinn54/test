@@ -19,7 +19,7 @@ export const AccountState = atom<string | null>({
 
 export const ChainNetworkState = atom<string>({
   key: "ethers_network",
-  default: "polygon",
+  default: "unknown",
   effects_UNSTABLE: [persistAtom], // Apply persistence effect
 });
 
